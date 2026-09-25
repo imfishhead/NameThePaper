@@ -247,7 +247,9 @@ async function metadataForOJSDownload(download) {
 
 async function metadataForDOIDownload(download) {
   const doi = [download.finalUrl, download.url, download.referrer]
-    .map((url) => CiteNameCitation.doiFromURL(url) || CiteNameCitation.kargerDOIFromURL(url))
+    .map((url) => CiteNameCitation.doiFromURL(url)
+      || CiteNameCitation.kargerDOIFromURL(url)
+      || CiteNameCitation.natureDOIFromURL(url))
     .find(Boolean);
   return metadataForDOI(doi);
 }

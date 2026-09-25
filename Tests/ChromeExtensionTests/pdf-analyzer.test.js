@@ -393,6 +393,12 @@ test("DOI URLs use Crossref metadata before reading the PDF", () => {
     "10.1159/000484938"
   );
   assert.equal(
+    globalThis.CiteNameCitation.natureDOIFromURL(
+      "https://www.nature.com/articles/s41467-024-46209-8.pdf"
+    ),
+    "10.1038/s41467-024-46209-8"
+  );
+  assert.equal(
     globalThis.CiteNameCitation.scienceDirectPIIFromURL(
       "https://pdf.sciencedirectassets.com/path/main.pdf?pii=S0747563217303527&X-Amz-Signature=example"
     ),

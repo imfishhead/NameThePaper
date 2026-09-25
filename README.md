@@ -8,7 +8,7 @@ main.pdf
 Lorraine Mazerolle et al. (2013) - Shaping Citizen Perceptions of Police Legitimacy- A Randomized Field Trial of Procedural Justice.pdf
 ```
 
-目前版本：**2.0.33**
+目前版本：**2.0.34**
 
 CiteName 不需要桌面 App、Native Host 或常駐背景程式。PDF 由擴充功能在瀏覽器內分析，不會上傳到 CiteName 的伺服器。
 
@@ -29,6 +29,7 @@ CiteName 不需要桌面 App、Native Host 或常駐背景程式。PDF 由擴充
 | ScienceDirect | `sciencedirect.com`、`sciencedirectassets.com` | PDF | PII 與 Crossref 書目資料 |
 | Karger | `karger.com` | PDF | 下載網址中的文章編號與 Crossref 書目資料 |
 | ResearchGate | `researchgate.net/publication/<ID>` | 公開全文 PDF | 文章頁 metadata；缺少分頁資料時由 PDF 網址還原標題並查詢 Crossref |
+| Nature Portfolio | `nature.com/articles/<ID>` | 文章 PDF | 從 Nature 文章編號還原 DOI，再查詢 Crossref |
 
 華藝搜尋結果換頁後，CiteName 會重新保存當頁各筆資料，再以原始 PDF 標題配對正確的作者與年份，避免整頁下載套用同一個檔名。
 
@@ -98,14 +99,14 @@ npm run build:extension
 
 ```sh
 cd "dist/CiteName Chrome/Extension"
-zip -r -q "../../CiteName-2.0.33-chrome-web-store.zip" . \
+zip -r -q "../../CiteName-2.0.34-chrome-web-store.zip" . \
   -x '*.DS_Store' '__MACOSX/*'
 ```
 
 目前已建置的上架檔位於：
 
 ```text
-dist/CiteName-2.0.33-chrome-web-store.zip
+dist/CiteName-2.0.34-chrome-web-store.zip
 ```
 
 ## 瀏覽器與權限

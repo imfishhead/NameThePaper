@@ -321,6 +321,17 @@
     }
   }
 
+  function natureDOIFromURL(rawURL) {
+    try {
+      const url = new URL(rawURL);
+      if (!/(^|\.)nature\.com$/iu.test(url.hostname)) return "";
+      const articleID = url.pathname.match(/^\/articles\/([^/.]+)(?:\.pdf)?$/iu)?.[1];
+      return articleID ? `10.1038/${articleID}` : "";
+    } catch {
+      return "";
+    }
+  }
+
   function scienceDirectPIIFromURL(rawURL) {
     try {
       const url = new URL(rawURL);
@@ -391,6 +402,7 @@
     dspaceItemURL,
     doiFromURL,
     kargerDOIFromURL,
+    natureDOIFromURL,
     scienceDirectPIIFromURL,
     doiFromText,
     formattedAuthors,

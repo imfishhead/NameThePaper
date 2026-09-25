@@ -470,6 +470,42 @@ test("a DOI from the article page takes priority over a Springer book title", as
   assert.equal(harness.analysisCalls.length, 0);
 });
 
+test("a detached Nature PDF URL resolves its implicit DOI through Crossref", async () => {
+  const harness = createBackgroundHarness({
+    async fetchHandler(url) {
+      assert.match(url, /10.1038%2Fs41467-024-46209-8/u);
+      return {
+        ok: true,
+        async json() {
+          return { message: {
+            title: ["Coherent control of enhanced second-harmonic generation in a plasmonic nanocircuit using a transition metal dichalcogenide monolayer"],
+            author: [
+              { given: "Pei-Yuan", family: "Wu" },
+              { given: "Wei-Qing", family: "Lee" },
+              { given: "Chang-Hua", family: "Liu" },
+              { given: "Chen-Bin", family: "Huang" },
+            ],
+            published: { "date-parts": [[2024, 2, 29]] },
+          } };
+        },
+      };
+    },
+  });
+
+  const suggestion = await harness.determine({
+    id: 67,
+    tabId: -1,
+    filename: "s41467-024-46209-8.pdf",
+    finalUrl: "https://www.nature.com/articles/s41467-024-46209-8.pdf",
+    mime: "application/pdf",
+  });
+  assert.deepEqual({ ...suggestion }, {
+    filename: "Pei-Yuan Wu et al. (2024) - Coherent control of enhanced second-harmonic generation in a plasmonic nanocircuit using a transition metal dichalcogenide monolayer.pdf",
+    conflictAction: "uniquify",
+  });
+  assert.equal(harness.analysisCalls.length, 0);
+});
+
 test("a detached ResearchGate PDF download uses metadata from its publication page", async () => {
   const pageURL = "https://www.researchgate.net/publication/233506390_GRATITUDE_AND_HAPPINESS_DEVELOPMENT_OF_A_MEASURE_OF_GRATITUDE_AND_RELATIONSHIPS_WITH_SUBJECTIVE_WELL-BEING";
   const harness = createBackgroundHarness({
