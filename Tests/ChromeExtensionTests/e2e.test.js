@@ -470,6 +470,92 @@ test("a DOI from the article page takes priority over a Springer book title", as
   assert.equal(harness.analysisCalls.length, 0);
 });
 
+test("a detached ResearchGate PDF download uses metadata from its publication page", async () => {
+  const pageURL = "https://www.researchgate.net/publication/233506390_GRATITUDE_AND_HAPPINESS_DEVELOPMENT_OF_A_MEASURE_OF_GRATITUDE_AND_RELATIONSHIPS_WITH_SUBJECTIVE_WELL-BEING";
+  const harness = createBackgroundHarness({
+    async fetchHandler(url) {
+      assert.match(url, /10.2224%2Fsbp.2003.31.5.431/u);
+      return {
+        ok: true,
+        async json() {
+          return { message: {
+            title: ["Gratitude and Happiness: Development of a Measure of Gratitude, and Relationships with Subjective Well-Being"],
+            author: [
+              { given: "Philip C.", family: "Watkins" },
+              { given: "Kathrane", family: "Woodward" },
+              { given: "Tamara", family: "Stone" },
+              { given: "Russell L.", family: "Kolts" },
+            ],
+            published: { "date-parts": [[2003]] },
+          } };
+        },
+      };
+    },
+  });
+  await harness.onMessage.emit({
+    type: "citation-page-metadata",
+    metadata: {
+      title: "GRATITUDE AND HAPPINESS: DEVELOPMENT OF A MEASURE OF GRATITUDE, AND RELATIONSHIPS WITH SUBJECTIVE WELL-BEING",
+      author: "Philip Watkins et al.",
+      year: "2003",
+      doi: "10.2224/sbp.2003.31.5.431",
+      pageURL,
+      pdfURLs: [],
+      savedAt: Date.now(),
+    },
+  }, { url: pageURL, tab: { id: 64 } });
+
+  const suggestion = await harness.determine({
+    id: 65,
+    tabId: -1,
+    filename: "GRATITUDE-AND-HAPPINESS.pdf",
+    finalUrl: "https://www.researchgate.net/profile/Philip-Watkins/publication/233506390_GRATITUDE_AND_HAPPINESS/links/0deec5327213e6eb05000000/GRATITUDE-AND-HAPPINESS.pdf",
+    mime: "application/pdf",
+  });
+  assert.deepEqual({ ...suggestion }, {
+    filename: "Philip C. Watkins et al. (2003) - Gratitude and Happiness- Development of a Measure of Gratitude, and Relationships with Subjective Well-Being.pdf",
+    conflictAction: "uniquify",
+  });
+  assert.equal(harness.analysisCalls.length, 0);
+});
+
+test("a ResearchGate PDF URL resolves through Crossref without saved page metadata", async () => {
+  const harness = createBackgroundHarness({
+    async fetchHandler(url) {
+      assert.match(url, /works\?query\.title=GRATITUDE%20AND%20HAPPINESS/u);
+      return {
+        ok: true,
+        async json() {
+          return { message: { items: [{
+            title: ["GRATITUDE AND HAPPINESS: DEVELOPMENT OF A MEASURE OF GRATITUDE, AND RELATIONSHIPS WITH SUBJECTIVE WELL-BEING"],
+            author: [
+              { given: "Philip C.", family: "Watkins" },
+              { given: "Kathrane", family: "Woodward" },
+              { given: "Tamara", family: "Stone" },
+              { given: "Russell L.", family: "Kolts" },
+            ],
+            published: { "date-parts": [[2003]] },
+            DOI: "10.2224/sbp.2003.31.5.431",
+          }] } };
+        },
+      };
+    },
+  });
+
+  const suggestion = await harness.determine({
+    id: 66,
+    tabId: -1,
+    filename: "GRATITUDE-AND-HAPPINESS.pdf",
+    finalUrl: "https://www.researchgate.net/profile/Philip-Watkins/publication/233506390_GRATITUDE_AND_HAPPINESS_DEVELOPMENT_OF_A_MEASURE_OF_GRATITUDE_AND_RELATIONSHIPS_WITH_SUBJECTIVE_WELL-BEING/links/0deec5327213e6eb05000000/GRATITUDE-AND-HAPPINESS.pdf",
+    mime: "application/pdf",
+  });
+  assert.deepEqual({ ...suggestion }, {
+    filename: "Philip C. Watkins et al. (2003) - GRATITUDE AND HAPPINESS- DEVELOPMENT OF A MEASURE OF GRATITUDE, AND RELATIONSHIPS WITH SUBJECTIVE WELL-BEING.pdf",
+    conflictAction: "uniquify",
+  });
+  assert.equal(harness.analysisCalls.length, 0);
+});
+
 test("Airiti article metadata names a JavaScript-initiated PDF download", async () => {
   const pageURL = "https://www.airitilibrary.com/Article/Detail/P20170603003-N202311030006-00003";
   const harness = createBackgroundHarness({

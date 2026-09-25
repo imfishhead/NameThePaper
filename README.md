@@ -8,7 +8,7 @@ main.pdf
 Lorraine Mazerolle et al. (2013) - Shaping Citizen Perceptions of Police Legitimacy- A Randomized Field Trial of Procedural Justice.pdf
 ```
 
-目前版本：**2.0.30**
+目前版本：**2.0.33**
 
 CiteName 不需要桌面 App、Native Host 或常駐背景程式。PDF 由擴充功能在瀏覽器內分析，不會上傳到 CiteName 的伺服器。
 
@@ -28,6 +28,7 @@ CiteName 不需要桌面 App、Native Host 或常駐背景程式。PDF 由擴充
 | Open Journal Systems | 網址含 `/article/view/<id>` | PDF | OJS 文章頁的 `citation_*` metadata |
 | ScienceDirect | `sciencedirect.com`、`sciencedirectassets.com` | PDF | PII 與 Crossref 書目資料 |
 | Karger | `karger.com` | PDF | 下載網址中的文章編號與 Crossref 書目資料 |
+| ResearchGate | `researchgate.net/publication/<ID>` | 公開全文 PDF | 文章頁 metadata；缺少分頁資料時由 PDF 網址還原標題並查詢 Crossref |
 
 華藝搜尋結果換頁後，CiteName 會重新保存當頁各筆資料，再以原始 PDF 標題配對正確的作者與年份，避免整頁下載套用同一個檔名。
 
@@ -38,6 +39,7 @@ CiteName 也能處理未列在上表的學術網站：
 - 下載網址、文章網址或 PDF 內含 DOI 時，向 Crossref 查詢正式書目資料。
 - 文章頁含 `citation_title`、`citation_author`、`citation_publication_date`、`citation_pdf_url` 等 metadata 時，直接使用頁面資料。
 - PDF 可由瀏覽器讀取時，以 PDF.js 分析 PDF metadata、首頁文字與 DOI。
+- 英文學位論文 PDF 可由首頁的 `dissertation`、`thesis` 等標記辨識，並擷取 `By 作者` 與年份。
 - Open Journal Systems、DSpace 與 DOI 採用通用網址規則，因此可支援多個不同機構或出版社的站台。
 
 通用流程不代表所有學術網站都保證成功。網站若使用登入限制、防爬機制、特殊下載流程或無法讀取的 Blob，CiteName 可能只能保留原檔名。
@@ -96,14 +98,14 @@ npm run build:extension
 
 ```sh
 cd "dist/CiteName Chrome/Extension"
-zip -r -q "../../CiteName-2.0.30-chrome-web-store.zip" . \
+zip -r -q "../../CiteName-2.0.33-chrome-web-store.zip" . \
   -x '*.DS_Store' '__MACOSX/*'
 ```
 
 目前已建置的上架檔位於：
 
 ```text
-dist/CiteName-2.0.30-chrome-web-store.zip
+dist/CiteName-2.0.33-chrome-web-store.zip
 ```
 
 ## 瀏覽器與權限

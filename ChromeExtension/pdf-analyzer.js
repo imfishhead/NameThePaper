@@ -139,6 +139,14 @@
     return !line.includes(".") || words.length <= 6;
   }
 
+  function looksLikeDegreeBoilerplate(line) {
+    const lower = Citation.clean(line).toLowerCase();
+    return lower === "by" ||
+      /^(?:a\s+)?(?:dissertation|thesis)\b/u.test(lower) ||
+      /\bpresented to\b/u.test(lower) ||
+      /\b(?:degree of|partial fulfillment|requirements for|graduate college)\b/u.test(lower);
+  }
+
   function authorsFromFirstPage(lines, title) {
     const titleLower = title.toLowerCase();
     const titleEndIndex = lines.reduce((lastIndex, line, index) => {
@@ -150,7 +158,9 @@
     for (const line of lines.slice(titleEndIndex + 1, titleEndIndex + 13)) {
       const lower = line.text.toLowerCase();
       if (names.length > 0 && (line.text === line.text.toUpperCase() || lower === "abstract" || lower === "摘要")) break;
-      if (looksLikePersonName(line.text)) names.push(line.text);
+      if (looksLikeDegreeBoilerplate(line.text)) continue;
+      const candidate = Citation.clean(line.text).replace(/^by\s+/iu, "");
+      if (looksLikePersonName(candidate)) names.push(candidate);
     }
     if (names.length === 0) return "";
     if (names.length === 1) return Citation.normalizeAuthor(names[0]);
@@ -183,6 +193,10 @@
       /\bjournal\b/u,
       /\bvolume\s+\d+/u,
       /\bmanuscript\b/u,
+      /\bdissertation\b/u,
+      /\bthesis\b/u,
+      /\bpresented to the faculty\b/u,
+      /\bdegree of (?:doctor|master)\b/u,
       /摘要/u,
       /關鍵詞|关键词/u,
       /參考文獻|参考文献/u,

@@ -23,6 +23,11 @@ chrome.runtime.onMessage.addListener((message, sender) => {
     const metadata = normalizeCitationMetadata(message.metadata);
     if (!metadata) return;
     const values = { [`citationMetadata-${sender.tab.id}`]: metadata };
+    const researchGateID = researchGatePublicationID(metadata.pageURL);
+    if (researchGateID) {
+      values[`researchGateMetadata-${researchGateID}`] = metadata;
+      chrome.storage.local.set({ [`researchGateMetadata-${researchGateID}`]: metadata });
+    }
     if (isAiritiArticleURL(metadata.pageURL)) {
       values.airitiActiveMetadata = metadata;
       // Keep a short-lived durable fallback. Chrome invalidates existing
@@ -179,6 +184,14 @@ async function determineFilename(download, suggest) {
   if (pmcFilename) {
     await markPreNamed(download.id);
     suggest({ filename: pmcFilename, conflictAction: "uniquify" });
+    return;
+  }
+
+  const researchGateMetadata = await metadataForResearchGateDownload(download);
+  const researchGateFilename = CiteNameCitation.filename(researchGateMetadata, filenameFormat);
+  if (researchGateFilename) {
+    await markPreNamed(download.id);
+    suggest({ filename: researchGateFilename, conflictAction: "uniquify" });
     return;
   }
 
@@ -382,6 +395,39 @@ async function metadataForPMCDownload(download) {
   }
 }
 
+async function metadataForResearchGateDownload(download) {
+  const candidates = [download.finalUrl, download.url, download.referrer].filter(Boolean);
+  const publicationID = candidates
+    .map(researchGatePublicationID)
+    .find(Boolean);
+  if (!publicationID) return null;
+
+  const key = `researchGateMetadata-${publicationID}`;
+  const [sessionStored, localStored] = await Promise.all([
+    chrome.storage.session.get(key),
+    chrome.storage.local.get(key),
+  ]);
+  const metadata = normalizeCitationMetadata(sessionStored[key] || localStored[key]);
+  if (metadata && Date.now() - metadata.savedAt <= 2 * 60 * 60 * 1000) {
+    return await metadataForDOI(metadata.doi) || metadata;
+  }
+
+  const title = candidates.map(researchGateTitleFromURL).find(Boolean);
+  if (!title) return null;
+  try {
+    const response = await fetch(
+      `https://api.crossref.org/works?query.title=${encodeURIComponent(title)}&rows=5`,
+      { headers: { Accept: "application/json" } }
+    );
+    if (!response.ok) return null;
+    const works = (await response.json())?.message?.items || [];
+    const work = works.find((candidate) => researchTitleSimilarity(title, candidate?.title?.[0]) >= 0.8);
+    return CiteNameCitation.metadataFromCrossrefWork(work);
+  } catch {
+    return null;
+  }
+}
+
 chrome.downloads.onChanged.addListener(async (delta) => {
   if (delta.state?.current !== "complete") return;
 
@@ -465,6 +511,41 @@ function isAiritiArticleURL(rawURL) {
   } catch {
     return false;
   }
+}
+
+function researchGatePublicationID(rawURL) {
+  try {
+    const url = new URL(rawURL);
+    const hostname = url.hostname.toLowerCase();
+    if (hostname !== "researchgate.net" && !hostname.endsWith(".researchgate.net")) return "";
+    return url.pathname.match(/\/publication\/(\d+)(?:[_/]|$)/u)?.[1] || "";
+  } catch {
+    return "";
+  }
+}
+
+function researchGateTitleFromURL(rawURL) {
+  try {
+    const url = new URL(rawURL);
+    const hostname = url.hostname.toLowerCase();
+    if (hostname !== "researchgate.net" && !hostname.endsWith(".researchgate.net")) return "";
+    const slug = url.pathname.match(/\/publication\/\d+_([^/]+)/u)?.[1] || "";
+    return decodeURIComponent(slug).replace(/_/gu, " ").trim();
+  } catch {
+    return "";
+  }
+}
+
+function researchTitleSimilarity(left, right) {
+  const words = (value) => new Set(CiteNameCitation.clean(value)
+    .normalize("NFKC")
+    .toLowerCase()
+    .match(/[\p{L}\p{N}]+/gu) || []);
+  const leftWords = words(left);
+  const rightWords = words(right);
+  if (leftWords.size === 0 || rightWords.size === 0) return 0;
+  const shared = [...leftWords].filter((word) => rightWords.has(word)).length;
+  return shared / Math.max(leftWords.size, rightWords.size);
 }
 
 function isAiritiURL(rawURL) {

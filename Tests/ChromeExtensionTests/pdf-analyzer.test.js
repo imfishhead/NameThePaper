@@ -112,6 +112,43 @@ test("an authors note identifies a journal PDF without an abstract heading", () 
   );
 });
 
+test("an English dissertation title page is recognized as an academic PDF", () => {
+  assert.equal(
+    globalThis.CiteNamePDF.hasAcademicSignals("A dissertation presented to the faculty of the Graduate College"),
+    true
+  );
+});
+
+test("a Digital Commons dissertation title page provides its author and year", async () => {
+  const title = "The Psychological Effects of Perceived Scarcity on Consumers’ Buying Behavior";
+  const fakeDocument = {
+    async getMetadata() {
+      return { info: { Title: title, Author: "", CreationDate: "D:20130601000000Z" } };
+    },
+    async getPage() {
+      return {
+        async getTextContent() {
+          return { items: [
+            { str: title, height: 20, transform: [20, 0, 0, 20, 0, 700], hasEOL: true },
+            { str: "By Shipra Gupta", height: 12, transform: [12, 0, 0, 12, 0, 660], hasEOL: true },
+            { str: "A Dissertation", height: 12, transform: [12, 0, 0, 12, 0, 620], hasEOL: true },
+            { str: "Presented to the Faculty of the Graduate College", height: 12, transform: [12, 0, 0, 12, 0, 600], hasEOL: true },
+            { str: "University of Nebraska", height: 12, transform: [12, 0, 0, 12, 0, 580], hasEOL: true },
+            { str: "2013", height: 12, transform: [12, 0, 0, 12, 0, 560], hasEOL: true },
+          ] };
+        },
+      };
+    },
+  };
+
+  const metadata = await globalThis.CiteNamePDF.analyzeDocument(fakeDocument, "viewcontent.cgi.pdf");
+  assert.deepEqual(metadata, { title, author: "Shipra Gupta", year: "2013" });
+  assert.equal(
+    globalThis.CiteNameCitation.filename(metadata),
+    "Shipra Gupta (2013) - The Psychological Effects of Perceived Scarcity on Consumers’ Buying Behavior.pdf"
+  );
+});
+
 test("internal PostScript source paths in PDF metadata fall back to the page title", async () => {
   const fakeDocument = {
     async getMetadata() {
