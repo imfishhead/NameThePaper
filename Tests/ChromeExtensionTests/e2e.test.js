@@ -208,7 +208,7 @@ test("manifest points only to files that exist", () => {
     ...Object.values(manifest.action.default_icon),
     ...manifest.content_scripts.flatMap((entry) => entry.js),
   ];
-  assert.equal(manifest.name, "CiteName");
+  assert.equal(manifest.name, "NameThePaper");
   assert.ok(manifest.permissions.includes("downloads"));
   assert.ok(manifest.permissions.includes("offscreen"));
   assert.ok(!manifest.permissions.includes("nativeMessaging"));
@@ -506,6 +506,72 @@ test("a detached Nature PDF URL resolves its implicit DOI through Crossref", asy
   assert.equal(harness.analysisCalls.length, 0);
 });
 
+test("a detached UBC thesis download uses Open Collections metadata", async () => {
+  const harness = createBackgroundHarness({
+    async fetchHandler(url) {
+      assert.equal(url, "https://oc-index.library.ubc.ca/collections/24/items/1.0444033");
+      return {
+        ok: true,
+        async json() {
+          return { data: {
+            Creator: [{ value: "Tomm, Brandon M." }],
+            DateIssued: [{ value: "2024" }],
+            IsShownAt: [{ value: "10.14288/1.0444033" }],
+            Title: [{ value: "Psychological consequences of financial scarcity" }],
+          } };
+        },
+      };
+    },
+  });
+
+  const suggestion = await harness.determine({
+    id: 68,
+    tabId: -1,
+    filename: "ubc_2024_november_tomm_brandon.pdf",
+    finalUrl: "https://open.library.ubc.ca/media/download/pdf/24/1.0444033/3",
+    mime: "application/pdf",
+  });
+  assert.deepEqual({ ...suggestion }, {
+    filename: "Brandon M. Tomm (2024) - Psychological consequences of financial scarcity.pdf",
+    conflictAction: "uniquify",
+  });
+  assert.equal(harness.analysisCalls.length, 0);
+});
+
+test("a detached eScholarship PDF uses official item metadata", async () => {
+  const harness = createBackgroundHarness({
+    async fetchHandler(url, options) {
+      assert.equal(url, "https://escholarship.org/graphql");
+      assert.equal(options.method, "POST");
+      assert.match(JSON.parse(options.body).query, /ark:\/13030\/qt8058x3w3/u);
+      return {
+        ok: true,
+        async json() {
+          return { data: { item: {
+            title: "Scarcity captures attention and induces neglect:\nEyetracking and behavioral evidence",
+            published: "2016-01-01",
+            authors: { nodes: [{ name: "Tomm, Brandon M." }, { name: "Zhao, Jiaying" }] },
+            contentLink: "https://escholarship.org/content/qt8058x3w3/qt8058x3w3.pdf",
+          } } };
+        },
+      };
+    },
+  });
+
+  const suggestion = await harness.determine({
+    id: 69,
+    tabId: -1,
+    filename: "qt8058x3w3.pdf",
+    finalUrl: "https://escholarship.org/content/qt8058x3w3/qt8058x3w3.pdf",
+    mime: "application/pdf",
+  });
+  assert.deepEqual({ ...suggestion }, {
+    filename: "Brandon M. Tomm & Jiaying Zhao (2016) - Scarcity captures attention and induces neglect- Eyetracking and behavioral evidence.pdf",
+    conflictAction: "uniquify",
+  });
+  assert.equal(harness.analysisCalls.length, 0);
+});
+
 test("a detached ResearchGate PDF download uses metadata from its publication page", async () => {
   const pageURL = "https://www.researchgate.net/publication/233506390_GRATITUDE_AND_HAPPINESS_DEVELOPMENT_OF_A_MEASURE_OF_GRATITUDE_AND_RELATIONSHIPS_WITH_SUBJECTIVE_WELL-BEING";
   const harness = createBackgroundHarness({
@@ -691,7 +757,7 @@ test("Airiti query pages capture metadata from the clicked search result", () =>
     chrome: { runtime: { sendMessage(message) { messages.push(message); } } },
   });
   loadScript(context, "citation.js");
-  context.CiteNameCitation.metadataFromDocument = () => ({
+  context.NameThePaperCitation.metadataFromDocument = () => ({
     title: "搜尋結果頁共用標題",
     author: "",
     year: "2026",

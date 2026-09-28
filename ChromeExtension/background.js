@@ -10,7 +10,7 @@ let creatingOffscreenDocument;
 
 chrome.runtime.onInstalled.addListener(async () => {
   const saved = await chrome.storage.local.get({ enabled: true, citationFormat: true });
-  const filenameFormat = CiteNameCitation.normalizeFilenameFormat(saved.filenameFormat ?? saved.citationFormat);
+  const filenameFormat = NameThePaperCitation.normalizeFilenameFormat(saved.filenameFormat ?? saved.citationFormat);
   await chrome.storage.local.set({
     enabled: saved.enabled,
     citationFormat: filenameFormat === "author-year-title",
@@ -102,7 +102,7 @@ chrome.downloads.onDeterminingFilename.addListener((download, suggest) => {
 
 async function determineFilename(download, suggest) {
   const settings = await chrome.storage.local.get(DEFAULT_SETTINGS);
-  const filenameFormat = CiteNameCitation.normalizeFilenameFormat(settings.filenameFormat ?? settings.citationFormat);
+  const filenameFormat = NameThePaperCitation.normalizeFilenameFormat(settings.filenameFormat ?? settings.citationFormat);
   if (!settings.enabled) {
     suggest();
     return;
@@ -140,7 +140,7 @@ async function determineFilename(download, suggest) {
   }
 
   const ojsMetadata = await metadataForOJSDownload(download);
-  const ojsFilename = CiteNameCitation.filename(ojsMetadata, filenameFormat);
+  const ojsFilename = NameThePaperCitation.filename(ojsMetadata, filenameFormat);
   if (ojsFilename) {
     await markPreNamed(download.id);
     suggest({ filename: ojsFilename, conflictAction: "uniquify" });
@@ -148,7 +148,7 @@ async function determineFilename(download, suggest) {
   }
 
   const doiMetadata = await metadataForDOIDownload(download);
-  const doiFilename = CiteNameCitation.filename(doiMetadata, filenameFormat);
+  const doiFilename = NameThePaperCitation.filename(doiMetadata, filenameFormat);
   if (doiFilename) {
     await markPreNamed(download.id);
     suggest({ filename: doiFilename, conflictAction: "uniquify" });
@@ -156,7 +156,7 @@ async function determineFilename(download, suggest) {
   }
 
   const scienceDirectMetadata = await metadataForScienceDirectDownload(download);
-  const scienceDirectFilename = CiteNameCitation.filename(scienceDirectMetadata, filenameFormat);
+  const scienceDirectFilename = NameThePaperCitation.filename(scienceDirectMetadata, filenameFormat);
   if (scienceDirectFilename) {
     await markPreNamed(download.id);
     suggest({ filename: scienceDirectFilename, conflictAction: "uniquify" });
@@ -164,15 +164,31 @@ async function determineFilename(download, suggest) {
   }
 
   const airitiMetadata = await metadataForAiritiDownload(download);
-  const airitiFilename = CiteNameCitation.filename(airitiMetadata, filenameFormat);
+  const airitiFilename = NameThePaperCitation.filename(airitiMetadata, filenameFormat);
   if (airitiFilename) {
     await markPreNamed(download.id);
     suggest({ filename: airitiFilename, conflictAction: "uniquify" });
     return;
   }
 
+  const ubcMetadata = await metadataForUBCDownload(download);
+  const ubcFilename = NameThePaperCitation.filename(ubcMetadata, filenameFormat);
+  if (ubcFilename) {
+    await markPreNamed(download.id);
+    suggest({ filename: ubcFilename, conflictAction: "uniquify" });
+    return;
+  }
+
+  const eScholarshipMetadata = await metadataForEScholarshipDownload(download);
+  const eScholarshipFilename = NameThePaperCitation.filename(eScholarshipMetadata, filenameFormat);
+  if (eScholarshipFilename) {
+    await markPreNamed(download.id);
+    suggest({ filename: eScholarshipFilename, conflictAction: "uniquify" });
+    return;
+  }
+
   const dspaceMetadata = await metadataForDSpaceDownload(download);
-  const dspaceFilename = CiteNameCitation.filename(dspaceMetadata, filenameFormat);
+  const dspaceFilename = NameThePaperCitation.filename(dspaceMetadata, filenameFormat);
   if (dspaceFilename) {
     await markPreNamed(download.id);
     suggest({ filename: dspaceFilename, conflictAction: "uniquify" });
@@ -180,7 +196,7 @@ async function determineFilename(download, suggest) {
   }
 
   const pmcMetadata = await metadataForPMCDownload(download);
-  const pmcFilename = CiteNameCitation.filename(pmcMetadata, filenameFormat);
+  const pmcFilename = NameThePaperCitation.filename(pmcMetadata, filenameFormat);
   if (pmcFilename) {
     await markPreNamed(download.id);
     suggest({ filename: pmcFilename, conflictAction: "uniquify" });
@@ -188,7 +204,7 @@ async function determineFilename(download, suggest) {
   }
 
   const researchGateMetadata = await metadataForResearchGateDownload(download);
-  const researchGateFilename = CiteNameCitation.filename(researchGateMetadata, filenameFormat);
+  const researchGateFilename = NameThePaperCitation.filename(researchGateMetadata, filenameFormat);
   if (researchGateFilename) {
     await markPreNamed(download.id);
     suggest({ filename: researchGateFilename, conflictAction: "uniquify" });
@@ -197,7 +213,7 @@ async function determineFilename(download, suggest) {
 
   const pageMetadata = await metadataForCitationDownload(download);
   const pageDOIMetadata = await metadataForDOI(pageMetadata?.doi);
-  const pageFilename = CiteNameCitation.filename(pageDOIMetadata || pageMetadata, filenameFormat);
+  const pageFilename = NameThePaperCitation.filename(pageDOIMetadata || pageMetadata, filenameFormat);
   if (pageFilename) {
     await markPreNamed(download.id);
     suggest({ filename: pageFilename, conflictAction: "uniquify" });
@@ -215,7 +231,7 @@ async function determineFilename(download, suggest) {
       ? await metadataForDOI(response.metadata?.doi)
       : null;
     const filename = response?.ok
-      ? CiteNameCitation.filename(pdfDOIMetadata || response.metadata, filenameFormat)
+      ? NameThePaperCitation.filename(pdfDOIMetadata || response.metadata, filenameFormat)
       : "";
     if (!filename) {
       await markAnalysisFailed(download.id, response?.error);
@@ -233,13 +249,13 @@ async function determineFilename(download, suggest) {
 
 async function metadataForOJSDownload(download) {
   const articleURL = [download.referrer, download.finalUrl, download.url]
-    .map(CiteNameCitation.ojsArticleURL).find(Boolean);
+    .map(NameThePaperCitation.ojsArticleURL).find(Boolean);
   if (!articleURL) return null;
   try {
     const response = await fetch(articleURL, {
       headers: { Accept: "text/html,application/xhtml+xml" },
     });
-    return response.ok ? CiteNameCitation.metadataFromHTML(await response.text()) : null;
+    return response.ok ? NameThePaperCitation.metadataFromHTML(await response.text()) : null;
   } catch {
     return null;
   }
@@ -247,9 +263,9 @@ async function metadataForOJSDownload(download) {
 
 async function metadataForDOIDownload(download) {
   const doi = [download.finalUrl, download.url, download.referrer]
-    .map((url) => CiteNameCitation.doiFromURL(url)
-      || CiteNameCitation.kargerDOIFromURL(url)
-      || CiteNameCitation.natureDOIFromURL(url))
+    .map((url) => NameThePaperCitation.doiFromURL(url)
+      || NameThePaperCitation.kargerDOIFromURL(url)
+      || NameThePaperCitation.natureDOIFromURL(url))
     .find(Boolean);
   return metadataForDOI(doi);
 }
@@ -262,7 +278,7 @@ async function metadataForDOI(doi) {
     });
     if (!response.ok) return null;
     const body = await response.json();
-    return CiteNameCitation.metadataFromCrossrefWork(body?.message);
+    return NameThePaperCitation.metadataFromCrossrefWork(body?.message);
   } catch {
     return null;
   }
@@ -270,7 +286,7 @@ async function metadataForDOI(doi) {
 
 async function metadataForScienceDirectDownload(download) {
   const pii = [download.finalUrl, download.url, download.referrer]
-    .map(CiteNameCitation.scienceDirectPIIFromURL).find(Boolean);
+    .map(NameThePaperCitation.scienceDirectPIIFromURL).find(Boolean);
   if (!pii) return null;
   try {
     const response = await fetch(`https://api.crossref.org/works?query=${encodeURIComponent(pii)}&rows=5`, {
@@ -280,7 +296,7 @@ async function metadataForScienceDirectDownload(download) {
     const works = (await response.json())?.message?.items || [];
     const work = works.find((candidate) => (candidate?.["alternative-id"] || [])
       .some((id) => String(id).toUpperCase() === pii));
-    return CiteNameCitation.metadataFromCrossrefWork(work);
+    return NameThePaperCitation.metadataFromCrossrefWork(work);
   } catch {
     return null;
   }
@@ -347,7 +363,7 @@ function titleFromDownloadFilename(rawFilename) {
 }
 
 function comparableAiritiTitle(value) {
-  return CiteNameCitation.clean(value)
+  return NameThePaperCitation.clean(value)
     .normalize("NFKC")
     .replace(/[\s：:－—–_-]+/gu, "")
     .toLowerCase();
@@ -355,11 +371,39 @@ function comparableAiritiTitle(value) {
 
 async function metadataForDSpaceDownload(download) {
   const itemURL = [download.referrer, download.finalUrl, download.url]
-    .map(CiteNameCitation.dspaceItemURL).find(Boolean);
+    .map(NameThePaperCitation.dspaceItemURL).find(Boolean);
   if (!itemURL) return null;
   try {
     const response = await fetch(itemURL, { headers: { Accept: "application/json" } });
-    return response.ok ? CiteNameCitation.metadataFromDSpaceItem(await response.json()) : null;
+    return response.ok ? NameThePaperCitation.metadataFromDSpaceItem(await response.json()) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function metadataForUBCDownload(download) {
+  const itemURL = [download.referrer, download.finalUrl, download.url]
+    .map(NameThePaperCitation.ubcItemAPIURL).find(Boolean);
+  if (!itemURL) return null;
+  try {
+    const response = await fetch(itemURL, { headers: { Accept: "application/json" } });
+    return response.ok ? NameThePaperCitation.metadataFromUBCItem(await response.json()) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function metadataForEScholarshipDownload(download) {
+  const query = [download.referrer, download.finalUrl, download.url]
+    .map(NameThePaperCitation.eScholarshipGraphQLQuery).find(Boolean);
+  if (!query) return null;
+  try {
+    const response = await fetch("https://escholarship.org/graphql", {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    });
+    return response.ok ? NameThePaperCitation.metadataFromEScholarshipItem(await response.json()) : null;
   } catch {
     return null;
   }
@@ -367,7 +411,7 @@ async function metadataForDSpaceDownload(download) {
 
 async function metadataForPMCDownload(download) {
   const candidates = [download.finalUrl, download.url, download.referrer].filter(Boolean);
-  const articleURL = candidates.map(CiteNameCitation.articleURLForPMC).find(Boolean);
+  const articleURL = candidates.map(NameThePaperCitation.articleURLForPMC).find(Boolean);
   if (!articleURL) return null;
   const pmcID = articleURL.match(/\/(PMC\d+)\/?$/iu)?.[1]?.toUpperCase();
   if (!pmcID) return null;
@@ -380,7 +424,7 @@ async function metadataForPMCDownload(download) {
       headers: { Accept: "application/json" },
     });
     const record = response.ok ? (await response.json())?.resultList?.result?.[0] : null;
-    const metadata = CiteNameCitation.metadataFromEuropePMCRecord(record);
+    const metadata = NameThePaperCitation.metadataFromEuropePMCRecord(record);
     if (metadata) return metadata;
   } catch {
     // The official PMC article page remains a useful fallback below.
@@ -391,7 +435,7 @@ async function metadataForPMCDownload(download) {
       credentials: "include",
       headers: { Accept: "text/html,application/xhtml+xml" },
     });
-    return response.ok ? CiteNameCitation.metadataFromHTML(await response.text()) : null;
+    return response.ok ? NameThePaperCitation.metadataFromHTML(await response.text()) : null;
   } catch {
     return null;
   }
@@ -424,7 +468,7 @@ async function metadataForResearchGateDownload(download) {
     if (!response.ok) return null;
     const works = (await response.json())?.message?.items || [];
     const work = works.find((candidate) => researchTitleSimilarity(title, candidate?.title?.[0]) >= 0.8);
-    return CiteNameCitation.metadataFromCrossrefWork(work);
+    return NameThePaperCitation.metadataFromCrossrefWork(work);
   } catch {
     return null;
   }
@@ -476,12 +520,12 @@ async function markAnalysisFailed(downloadId, reason) {
 }
 
 function normalizeCitationMetadata(raw) {
-  if (!raw || !CiteNameCitation.isPlausibleTitle(raw.title)) return null;
+  if (!raw || !NameThePaperCitation.isPlausibleTitle(raw.title)) return null;
   return {
-    title: CiteNameCitation.preferredSingleLanguageTitle(raw.title),
-    author: CiteNameCitation.clean(raw.author),
-    year: CiteNameCitation.extractYear(raw.year),
-    doi: CiteNameCitation.doiFromText(raw.doi),
+    title: NameThePaperCitation.preferredSingleLanguageTitle(raw.title),
+    author: NameThePaperCitation.clean(raw.author),
+    year: NameThePaperCitation.extractYear(raw.year),
+    doi: NameThePaperCitation.doiFromText(raw.doi),
     pageURL: String(raw.pageURL || ""),
     pdfURLs: Array.isArray(raw.pdfURLs) ? raw.pdfURLs.map(String) : [],
     savedAt: Number(raw.savedAt) || Date.now(),
@@ -539,7 +583,7 @@ function researchGateTitleFromURL(rawURL) {
 }
 
 function researchTitleSimilarity(left, right) {
-  const words = (value) => new Set(CiteNameCitation.clean(value)
+  const words = (value) => new Set(NameThePaperCitation.clean(value)
     .normalize("NFKC")
     .toLowerCase()
     .match(/[\p{L}\p{N}]+/gu) || []);
@@ -712,7 +756,7 @@ async function metadataForNDLTDDownload(download) {
 function showNotification(title, message) {
   chrome.notifications.create({
     type: "basic",
-    iconUrl: "icons/citename-128.png",
+    iconUrl: "icons/namethepaper-128.png",
     title,
     message,
   });

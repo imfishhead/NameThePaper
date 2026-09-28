@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "CiteName",
-  "version": "2.0.34",
+  "name": "NameThePaper",
+  "version": "2.0.37",
   "minimum_chrome_version": "116",
   "description": "下載學術 PDF、碩博士論文網 ZIP 或國圖期刊全文後，自動依作者、年份與標題重新命名。",
   "permissions": [
@@ -18,10 +18,10 @@
     "service_worker": "background.js"
   },
   "icons": {
-    "16": "icons/citename-16.png",
-    "32": "icons/citename-32.png",
-    "48": "icons/citename-48.png",
-    "128": "icons/citename-128.png"
+    "16": "icons/namethepaper-16.png",
+    "32": "icons/namethepaper-32.png",
+    "48": "icons/namethepaper-48.png",
+    "128": "icons/namethepaper-128.png"
   },
   "content_scripts": [
     {
@@ -41,10 +41,10 @@
     }
   ],
   "action": {
-    "default_title": "CiteName",
+    "default_title": "NameThePaper",
     "default_icon": {
-      "16": "icons/citename-16.png",
-      "32": "icons/citename-32.png"
+      "16": "icons/namethepaper-16.png",
+      "32": "icons/namethepaper-32.png"
     },
     "default_popup": "popup.html"
   }

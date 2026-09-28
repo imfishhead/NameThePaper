@@ -42,7 +42,7 @@ function createPDF({ title, author, year, academic = true }) {
 test("PDF.js extracts a citation filename entirely inside the extension", async () => {
   const pdfjsURL = pathToFileURL(path.join(projectRoot, "node_modules/pdfjs-dist/legacy/build/pdf.mjs"));
   const pdfjsLib = await import(pdfjsURL.href);
-  const metadata = await globalThis.CiteNamePDF.analyzeData(
+  const metadata = await globalThis.NameThePaperPDF.analyzeData(
     pdfjsLib,
     createPDF({
       title: "The Education of a Computer",
@@ -61,22 +61,22 @@ test("PDF.js extracts a citation filename entirely inside the extension", async 
     year: "1952",
   });
   assert.equal(
-    globalThis.CiteNameCitation.filename(metadata, true),
+    globalThis.NameThePaperCitation.filename(metadata, true),
     "Grace Hopper (1952) - The Education of a Computer.pdf"
   );
 });
 
 test("citation metadata uses the available citation parts when author or year is absent", () => {
   assert.equal(
-    globalThis.CiteNameCitation.filename({ title: "A Reliable Paper Title", author: "", year: "" }, true),
+    globalThis.NameThePaperCitation.filename({ title: "A Reliable Paper Title", author: "", year: "" }, true),
     "A Reliable Paper Title.pdf"
   );
   assert.equal(
-    globalThis.CiteNameCitation.filename({ title: "A Reliable Paper Title", author: "", year: "2026" }, true),
+    globalThis.NameThePaperCitation.filename({ title: "A Reliable Paper Title", author: "", year: "2026" }, true),
     "(2026) - A Reliable Paper Title.pdf"
   );
   assert.equal(
-    globalThis.CiteNameCitation.filename({ title: "A Reliable Paper Title", author: "Ada Lovelace", year: "" }, true),
+    globalThis.NameThePaperCitation.filename({ title: "A Reliable Paper Title", author: "Ada Lovelace", year: "" }, true),
     "Ada Lovelace - A Reliable Paper Title.pdf"
   );
 });
@@ -87,34 +87,34 @@ test("citation metadata supports each selected filename format", () => {
     year: "2024",
     title: "Analytical Engines",
   };
-  assert.equal(globalThis.CiteNameCitation.filename(metadata, "author-year-title"), "Ada Lovelace (2024) - Analytical Engines.pdf");
-  assert.equal(globalThis.CiteNameCitation.filename(metadata, "author-title"), "Ada Lovelace - Analytical Engines.pdf");
-  assert.equal(globalThis.CiteNameCitation.filename(metadata, "year-title"), "(2024) - Analytical Engines.pdf");
-  assert.equal(globalThis.CiteNameCitation.filename(metadata, "title"), "Analytical Engines.pdf");
+  assert.equal(globalThis.NameThePaperCitation.filename(metadata, "author-year-title"), "Ada Lovelace (2024) - Analytical Engines.pdf");
+  assert.equal(globalThis.NameThePaperCitation.filename(metadata, "author-title"), "Ada Lovelace - Analytical Engines.pdf");
+  assert.equal(globalThis.NameThePaperCitation.filename(metadata, "year-title"), "(2024) - Analytical Engines.pdf");
+  assert.equal(globalThis.NameThePaperCitation.filename(metadata, "title"), "Analytical Engines.pdf");
 });
 
 test("a generic PDF without academic signals uses only its title", async () => {
   const pdfjsURL = pathToFileURL(path.join(projectRoot, "node_modules/pdfjs-dist/legacy/build/pdf.mjs"));
   const pdfjsLib = await import(pdfjsURL.href);
-  const metadata = await globalThis.CiteNamePDF.analyzeData(
+  const metadata = await globalThis.NameThePaperPDF.analyzeData(
     pdfjsLib,
     createPDF({ title: "Annual Report", author: "Finance Office", year: "2024", academic: false }),
     { sourceFilename: "report.pdf", verbosity: 0 }
   );
   assert.deepEqual(metadata, { title: "Annual Report", author: "", year: "" });
-  assert.equal(globalThis.CiteNameCitation.filename(metadata), "Annual Report.pdf");
+  assert.equal(globalThis.NameThePaperCitation.filename(metadata), "Annual Report.pdf");
 });
 
 test("an authors note identifies a journal PDF without an abstract heading", () => {
   assert.equal(
-    globalThis.CiteNamePDF.hasAcademicSignals("Authors’ Note: Correspondence should be addressed to the first author."),
+    globalThis.NameThePaperPDF.hasAcademicSignals("Authors’ Note: Correspondence should be addressed to the first author."),
     true
   );
 });
 
 test("an English dissertation title page is recognized as an academic PDF", () => {
   assert.equal(
-    globalThis.CiteNamePDF.hasAcademicSignals("A dissertation presented to the faculty of the Graduate College"),
+    globalThis.NameThePaperPDF.hasAcademicSignals("A dissertation presented to the faculty of the Graduate College"),
     true
   );
 });
@@ -141,10 +141,10 @@ test("a Digital Commons dissertation title page provides its author and year", a
     },
   };
 
-  const metadata = await globalThis.CiteNamePDF.analyzeDocument(fakeDocument, "viewcontent.cgi.pdf");
+  const metadata = await globalThis.NameThePaperPDF.analyzeDocument(fakeDocument, "viewcontent.cgi.pdf");
   assert.deepEqual(metadata, { title, author: "Shipra Gupta", year: "2013" });
   assert.equal(
-    globalThis.CiteNameCitation.filename(metadata),
+    globalThis.NameThePaperCitation.filename(metadata),
     "Shipra Gupta (2013) - The Psychological Effects of Perceived Scarcity on Consumers’ Buying Behavior.pdf"
   );
 });
@@ -168,15 +168,15 @@ test("internal PostScript source paths in PDF metadata fall back to the page tit
       };
     },
   };
-  const metadata = await globalThis.CiteNamePDF.analyzeDocument(fakeDocument, "s26p9b_3.ps.pdf");
+  const metadata = await globalThis.NameThePaperPDF.analyzeDocument(fakeDocument, "s26p9b_3.ps.pdf");
   assert.equal(metadata.title, "Do Messages About Health Risks Threaten the Self? Increasing the Acceptance of Threatening Health Messages Via Self-Affirmation");
   assert.equal(metadata.author, "David A. K. Sherman");
 });
 
 test("layout-program working filenames are rejected as PDF titles", () => {
-  assert.equal(globalThis.CiteNameCitation.isPlausibleTitle("社会心理出片.indd.pdf"), false);
-  assert.equal(globalThis.CiteNameCitation.isPlausibleTitle("manuscript-final.docx"), false);
-  assert.equal(globalThis.CiteNameCitation.isPlausibleTitle("FI-01沈伯洋.tpf"), false);
+  assert.equal(globalThis.NameThePaperCitation.isPlausibleTitle("社会心理出片.indd.pdf"), false);
+  assert.equal(globalThis.NameThePaperCitation.isPlausibleTitle("manuscript-final.docx"), false);
+  assert.equal(globalThis.NameThePaperCitation.isPlausibleTitle("FI-01沈伯洋.tpf"), false);
 });
 
 test("a PDF without a prominent title preserves its original filename", async () => {
@@ -196,7 +196,7 @@ test("a PDF without a prominent title preserves its original filename", async ()
       };
     },
   };
-  assert.equal(await globalThis.CiteNamePDF.analyzeDocument(document, "20090518150216684.pdf"), null);
+  assert.equal(await globalThis.NameThePaperPDF.analyzeDocument(document, "20090518150216684.pdf"), null);
 });
 
 test("PMC article metadata is converted into a complete citation", () => {
@@ -214,7 +214,7 @@ test("PMC article metadata is converted into a complete citation", () => {
       return null;
     },
   }));
-  const metadata = globalThis.CiteNameCitation.metadataFromDocument({
+  const metadata = globalThis.NameThePaperCitation.metadataFromDocument({
     querySelectorAll() { return tags; },
   });
 
@@ -225,7 +225,7 @@ test("PMC article metadata is converted into a complete citation", () => {
     pdfURLs: ["/articles/PMC7409873/pdf/main.pdf"],
   });
   assert.equal(
-    globalThis.CiteNameCitation.articleURLForPMC(
+    globalThis.NameThePaperCitation.articleURLForPMC(
       "https://pmc.ncbi.nlm.nih.gov/articles/PMC7409873/pdf/main.pdf"
     ),
     "https://pmc.ncbi.nlm.nih.gov/articles/PMC7409873/"
@@ -233,7 +233,7 @@ test("PMC article metadata is converted into a complete citation", () => {
 });
 
 test("PMC HTML metadata can be parsed without a DOM", () => {
-  const metadata = globalThis.CiteNameCitation.metadataFromHTML(`
+  const metadata = globalThis.NameThePaperCitation.metadataFromHTML(`
     <meta name="citation_title" content="Can high quality listening predict lower speakers&#x27; prejudiced attitudes?">
     <meta name="citation_author" content="Guy Itzchakov">
     <meta name="citation_author" content="Netta Weinstein">
@@ -248,7 +248,7 @@ test("PMC HTML metadata can be parsed without a DOM", () => {
 });
 
 test("Europe PMC records provide a fast fallback for direct PMC PDF links", () => {
-  assert.deepEqual(globalThis.CiteNameCitation.metadataFromEuropePMCRecord({
+  assert.deepEqual(globalThis.NameThePaperCitation.metadataFromEuropePMCRecord({
     title: "Can high quality listening predict lower speakers' prejudiced attitudes?",
     authorString: "Itzchakov G, Weinstein N, Legate N, Amar M.",
     firstPublicationDate: "2020-08-06",
@@ -275,7 +275,7 @@ test("Airiti search results provide metadata for their own download buttons", ()
     },
   };
 
-  assert.deepEqual(globalThis.CiteNameCitation.metadataFromAiritiSearchResult(result), {
+  assert.deepEqual(globalThis.NameThePaperCitation.metadataFromAiritiSearchResult(result), {
     title: "中國認知領域作戰模型初探：以2020臺灣選舉為例",
     author: "沈伯洋",
     year: "2021",
@@ -298,7 +298,7 @@ test("Airiti search results support author and date fields without legacy wrappe
     },
   };
 
-  assert.deepEqual(globalThis.CiteNameCitation.metadataFromAiritiSearchResult(result), {
+  assert.deepEqual(globalThis.NameThePaperCitation.metadataFromAiritiSearchResult(result), {
     title: "可教化量刑與矯治之探討",
     author: "李錫棟",
     year: "2022",
@@ -307,7 +307,7 @@ test("Airiti search results support author and date fields without legacy wrappe
 });
 
 test("PMC XML accepts author groups without per-author contrib-type attributes", () => {
-  assert.deepEqual(globalThis.CiteNameCitation.metadataFromPMCXML(`
+  assert.deepEqual(globalThis.NameThePaperCitation.metadataFromPMCXML(`
     <article-title>Can high quality listening predict lower speakers' prejudiced attitudes?</article-title>
     <contrib-group content-type="author">
       <contrib><name><surname>Itzchakov</surname><given-names>Guy</given-names></name></contrib>
@@ -324,7 +324,7 @@ test("PMC XML accepts author groups without per-author contrib-type attributes",
 });
 
 test("Airiti citation metadata retains its DOI", () => {
-  const metadata = globalThis.CiteNameCitation.metadataFromHTML(`
+  const metadata = globalThis.NameThePaperCitation.metadataFromHTML(`
     <meta name="citation_title" content="資優班生的系統性壓力：落後者觀點">
     <meta name="citation_author" content="吳玟秀">
     <meta name="citation_author" content="曾正宜">
@@ -342,7 +342,7 @@ test("Airiti citation metadata retains its DOI", () => {
 
 test("download filenames replace characters rejected by Chrome", () => {
   assert.equal(
-    globalThis.CiteNameCitation.filename({
+    globalThis.NameThePaperCitation.filename({
       title: "Can high quality listening predict lower speakers' prejudiced attitudes?",
       author: "Guy Itzchakov et al.",
       year: "2020",
@@ -352,7 +352,7 @@ test("download filenames replace characters rejected by Chrome", () => {
 });
 
 test("DSpace item metadata takes priority over a PDF working filename", () => {
-  const metadata = globalThis.CiteNameCitation.metadataFromDSpaceItem({
+  const metadata = globalThis.NameThePaperCitation.metadataFromDSpaceItem({
     metadata: {
       "dc.title": [{ value: "The power of being heard: The benefits of perspective-giving in the context of intergroup conflict" }],
       "dc.contributor.author": [{ value: "Bruneau, Emile G." }, { value: "Saxe, Rebecca R." }],
@@ -366,45 +366,106 @@ test("DSpace item metadata takes priority over a PDF working filename", () => {
     pdfURLs: [],
   });
   assert.equal(
-    globalThis.CiteNameCitation.dspaceItemURL(
+    globalThis.NameThePaperCitation.dspaceItemURL(
       "https://dspace.mit.edu/entities/publication/8fcf0702-037d-4597-846d-d562a664b5f5"
     ),
     "https://dspace.mit.edu/server/api/core/items/8fcf0702-037d-4597-846d-d562a664b5f5"
   );
 });
 
+test("UBC Open Collections URLs and item metadata provide a thesis citation", () => {
+  const apiURL = "https://oc-index.library.ubc.ca/collections/24/items/1.0444033";
+  assert.equal(
+    globalThis.NameThePaperCitation.ubcItemAPIURL(
+      "https://open.library.ubc.ca/soa/cIRcle/collections/ubctheses/24/items/1.0444033"
+    ),
+    apiURL
+  );
+  assert.equal(
+    globalThis.NameThePaperCitation.ubcItemAPIURL(
+      "https://open.library.ubc.ca/media/download/pdf/24/1.0444033/3"
+    ),
+    apiURL
+  );
+  assert.deepEqual(globalThis.NameThePaperCitation.metadataFromUBCItem({ data: {
+    Creator: [{ value: "Tomm, Brandon M." }],
+    DateIssued: [{ value: "2024" }],
+    GraduationDate: [{ value: "2024-11" }],
+    IsShownAt: [{ value: "10.14288/1.0444033" }],
+    Title: [{ value: "Psychological consequences of financial scarcity" }],
+  } }), {
+    title: "Psychological consequences of financial scarcity",
+    author: "Brandon M. Tomm",
+    year: "2024",
+    pdfURLs: [],
+    doi: "10.14288/1.0444033",
+  });
+});
+
+test("eScholarship URLs and GraphQL metadata provide an article citation", () => {
+  assert.equal(
+    globalThis.NameThePaperCitation.eScholarshipItemID(
+      "https://escholarship.org/content/qt8058x3w3/qt8058x3w3.pdf"
+    ),
+    "qt8058x3w3"
+  );
+  assert.equal(
+    globalThis.NameThePaperCitation.eScholarshipItemID(
+      "https://escholarship.org/uc/item/8058x3w3"
+    ),
+    "qt8058x3w3"
+  );
+  assert.match(
+    globalThis.NameThePaperCitation.eScholarshipGraphQLQuery(
+      "https://escholarship.org/uc/item/8058x3w3"
+    ),
+    /ark:\/13030\/qt8058x3w3/u
+  );
+  assert.deepEqual(globalThis.NameThePaperCitation.metadataFromEScholarshipItem({ data: { item: {
+    title: "Scarcity captures attention and induces neglect:\nEyetracking and behavioral evidence",
+    published: "2016-01-01",
+    authors: { nodes: [{ name: "Tomm, Brandon M." }, { name: "Zhao, Jiaying" }] },
+    contentLink: "https://escholarship.org/content/qt8058x3w3/qt8058x3w3.pdf",
+  } } }), {
+    title: "Scarcity captures attention and induces neglect: Eyetracking and behavioral evidence",
+    author: "Brandon M. Tomm & Jiaying Zhao",
+    year: "2016",
+    pdfURLs: ["https://escholarship.org/content/qt8058x3w3/qt8058x3w3.pdf"],
+  });
+});
+
 test("DOI URLs use Crossref metadata before reading the PDF", () => {
   assert.equal(
-    globalThis.CiteNameCitation.doiFromURL(
+    globalThis.NameThePaperCitation.doiFromURL(
       "https://onlinelibrary.wiley.com/doi/epdf/10.1111/j.1745-9125.2012.00289.x"
     ),
     "10.1111/j.1745-9125.2012.00289.x"
   );
   assert.equal(
-    globalThis.CiteNameCitation.doiFromURL(
+    globalThis.NameThePaperCitation.doiFromURL(
       "https://link.springer.com/content/pdf/10.1023/B:SERS.0000029102.66384.a2.pdf"
     ),
     "10.1023/B:SERS.0000029102.66384.a2"
   );
   assert.equal(
-    globalThis.CiteNameCitation.kargerDOIFromURL(
+    globalThis.NameThePaperCitation.kargerDOIFromURL(
       "https://karger.com/pho/article-pdf/75/3/219/3432237/000484938.pdf"
     ),
     "10.1159/000484938"
   );
   assert.equal(
-    globalThis.CiteNameCitation.natureDOIFromURL(
+    globalThis.NameThePaperCitation.natureDOIFromURL(
       "https://www.nature.com/articles/s41467-024-46209-8.pdf"
     ),
     "10.1038/s41467-024-46209-8"
   );
   assert.equal(
-    globalThis.CiteNameCitation.scienceDirectPIIFromURL(
+    globalThis.NameThePaperCitation.scienceDirectPIIFromURL(
       "https://pdf.sciencedirectassets.com/path/main.pdf?pii=S0747563217303527&X-Amz-Signature=example"
     ),
     "S0747563217303527"
   );
-  const metadata = globalThis.CiteNameCitation.metadataFromCrossrefWork({
+  const metadata = globalThis.NameThePaperCitation.metadataFromCrossrefWork({
     title: ["Shaping Citizen Perceptions of Police Legitimacy: A Randomized Field Trial of Procedural Justice"],
     author: [
       { given: "Lorraine", family: "Mazerolle" },
@@ -415,21 +476,21 @@ test("DOI URLs use Crossref metadata before reading the PDF", () => {
     published: { "date-parts": [[2013, 2, 1]] },
   });
   assert.equal(
-    globalThis.CiteNameCitation.filename(metadata),
+    globalThis.NameThePaperCitation.filename(metadata),
     "Lorraine Mazerolle et al. (2013) - Shaping Citizen Perceptions of Police Legitimacy- A Randomized Field Trial of Procedural Justice.pdf"
   );
 });
 
 test("a DOI printed in a PDF can be used for formal citation metadata", () => {
   assert.equal(
-    globalThis.CiteNameCitation.doiFromText("DOI: 10.1177/30504554251328462"),
+    globalThis.NameThePaperCitation.doiFromText("DOI: 10.1177/30504554251328462"),
     "10.1177/30504554251328462"
   );
   assert.equal(
-    globalThis.CiteNameCitation.doiFromText("doi: 10.1159/0004 84938"),
+    globalThis.NameThePaperCitation.doiFromText("doi: 10.1159/0004 84938"),
     "10.1159/000484938"
   );
-  const metadata = globalThis.CiteNameCitation.metadataFromCrossrefWork({
+  const metadata = globalThis.NameThePaperCitation.metadataFromCrossrefWork({
     title: ["Small Targets Detection in LIDAR Point Clouds Based on Deep Learning"],
     author: [
       { given: "Zhipeng", family: "Zhai" },
@@ -439,19 +500,19 @@ test("a DOI printed in a PDF can be used for formal citation metadata", () => {
     published: { "date-parts": [[2025, 4, 1]] },
   });
   assert.equal(
-    globalThis.CiteNameCitation.filename(metadata),
+    globalThis.NameThePaperCitation.filename(metadata),
     "Zhipeng Zhai et al. (2025) - Small Targets Detection in LIDAR Point Clouds Based on Deep Learning.pdf"
   );
 });
 
 test("OJS PDF URLs resolve to their article metadata page", () => {
   assert.equal(
-    globalThis.CiteNameCitation.ojsArticleURL(
+    globalThis.NameThePaperCitation.ojsArticleURL(
       "https://ojs.aaai.org/aimagazine/index.php/aimagazine/article/view/22004/21782"
     ),
     "https://ojs.aaai.org/aimagazine/index.php/aimagazine/article/view/22004"
   );
-  const metadata = globalThis.CiteNameCitation.metadataFromHTML(`
+  const metadata = globalThis.NameThePaperCitation.metadataFromHTML(`
     <meta name="citation_title" content="The New Faculty Highlights Program at AAAI-21">
     <meta name="citation_author" content="Leyton-Brown, Kevin">
     <meta name="citation_author" content="Mausam">
@@ -459,7 +520,7 @@ test("OJS PDF URLs resolve to their article metadata page", () => {
     <meta name="citation_publication_date" content="2022-12-22">
   `);
   assert.equal(
-    globalThis.CiteNameCitation.filename(metadata),
+    globalThis.NameThePaperCitation.filename(metadata),
     "Kevin Leyton-Brown et al. (2022) - The New Faculty Highlights Program at AAAI-21.pdf"
   );
 });

@@ -1,7 +1,7 @@
 (function (root) {
   "use strict";
 
-  const Citation = root.CiteNameCitation;
+  const Citation = root.NameThePaperCitation;
   const AFFILIATION_WORDS = [
     "university", "college", "institute", "department", "school of",
     "faculty", "hospital", "laboratory", "centre", "center", "academy",
@@ -252,7 +252,7 @@
     }
   }
 
-  root.CiteNamePDF = {
+  root.NameThePaperPDF = {
     analyzeData,
     analyzeDocument,
     authorsFromFirstPage,

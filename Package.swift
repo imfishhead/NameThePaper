@@ -2,22 +2,22 @@
 import PackageDescription
 
 let package = Package(
-    name: "CiteName",
+    name: "NameThePaper",
     platforms: [
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "citename", targets: ["CiteName"])
+        .executable(name: "namethepaper", targets: ["NameThePaper"])
     ],
     targets: [
         .executableTarget(
-            name: "CiteName",
-            path: "Sources/CiteName"
+            name: "NameThePaper",
+            path: "Sources/NameThePaper"
         ),
         .testTarget(
-            name: "CiteNameTests",
-            dependencies: ["CiteName"],
-            path: "Tests/CiteNameTests"
+            name: "NameThePaperTests",
+            dependencies: ["NameThePaper"],
+            path: "Tests/NameThePaperTests"
         )
     ]
 )

@@ -13,4 +13,4 @@ if [[ "${1:-}" != "--skip-build" ]]; then
   "$project_dir/Scripts/build_chrome_extension.sh"
 fi
 
-echo "CiteName end-to-end tests passed"
+echo "NameThePaper end-to-end tests passed"

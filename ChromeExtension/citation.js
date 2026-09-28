@@ -300,6 +300,71 @@
     };
   }
 
+  function ubcItemAPIURL(rawURL) {
+    try {
+      const url = new URL(rawURL);
+      if (url.hostname.toLowerCase() !== "open.library.ubc.ca") return "";
+      const itemPage = url.pathname.match(/\/collections\/[^/]+\/(\d+)\/items\/(1\.\d+)(?:\/|$)/iu)
+        || url.pathname.match(/\/collections\/(\d+)\/items\/(1\.\d+)(?:\/|$)/iu);
+      const download = url.pathname.match(/\/media\/download\/pdf\/(\d+)\/(1\.\d+)(?:\/|$)/iu);
+      const match = itemPage || download;
+      return match
+        ? `https://oc-index.library.ubc.ca/collections/${match[1]}/items/${match[2]}`
+        : "";
+    } catch {
+      return "";
+    }
+  }
+
+  function metadataFromUBCItem(response) {
+    const item = response?.data || response || {};
+    const values = (name) => (Array.isArray(item[name]) ? item[name] : [])
+      .map((entry) => clean(entry?.value)).filter(Boolean);
+    const title = values("Title")[0] || "";
+    if (!isPlausibleTitle(title)) return null;
+    const doi = doiFromText(values("IsShownAt")[0]);
+    return {
+      title: preferredSingleLanguageTitle(title),
+      author: formatAuthorList(values("Creator")),
+      year: extractYear(values("DateIssued")[0] || values("GraduationDate")[0]),
+      pdfURLs: [],
+      ...(doi ? { doi } : {}),
+    };
+  }
+
+  function eScholarshipItemID(rawURL) {
+    try {
+      const url = new URL(rawURL);
+      if (!/(^|\.)escholarship\.org$/iu.test(url.hostname)) return "";
+      const directPDF = url.pathname.match(/^\/content\/(qt[0-9a-z]{8})\/\1\.pdf$/iu);
+      if (directPDF) return directPDF[1].toLowerCase();
+      const itemPage = url.pathname.match(/^\/uc\/item\/(?:qt)?([0-9a-z]{8})(?:\/|$)/iu);
+      return itemPage ? `qt${itemPage[1].toLowerCase()}` : "";
+    } catch {
+      return "";
+    }
+  }
+
+  function eScholarshipGraphQLQuery(rawURL) {
+    const itemID = eScholarshipItemID(rawURL);
+    return itemID
+      ? `{ item(id: "ark:/13030/${itemID}") { title published authors { nodes { name } } permalink contentLink } }`
+      : "";
+  }
+
+  function metadataFromEScholarshipItem(response) {
+    const item = response?.data?.item;
+    const title = clean(item?.title);
+    if (!isPlausibleTitle(title)) return null;
+    const contentLink = clean(item?.contentLink);
+    return {
+      title: preferredSingleLanguageTitle(title),
+      author: formatAuthorList((item?.authors?.nodes || []).map((author) => clean(author?.name))),
+      year: extractYear(item?.published),
+      pdfURLs: contentLink ? [contentLink] : [],
+    };
+  }
+
   function doiFromURL(rawURL) {
     try {
       // Publisher download URLs commonly append ".pdf" to an otherwise valid
@@ -393,7 +458,7 @@
     }
   }
 
-  root.CiteNameCitation = {
+  root.NameThePaperCitation = {
     articleURLForPMC,
     clean,
     extractYear,
@@ -410,6 +475,8 @@
     metadataFromDocument,
     metadataFromAiritiSearchResult,
     metadataFromDSpaceItem,
+    metadataFromEScholarshipItem,
+    metadataFromUBCItem,
     metadataFromCrossrefWork,
     metadataFromEuropePMCRecord,
     metadataFromHTML,
@@ -419,5 +486,8 @@
     preferredSingleLanguageTitle,
     sanitize,
     shouldUseMetadataTitle,
+    eScholarshipGraphQLQuery,
+    eScholarshipItemID,
+    ubcItemAPIURL,
   };
 })(globalThis);

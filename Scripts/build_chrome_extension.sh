@@ -2,7 +2,7 @@
 set -euo pipefail
 
 project_dir="${0:A:h:h}"
-output_dir="$project_dir/dist/CiteName Chrome"
+output_dir="$project_dir/dist/NameThePaper Chrome"
 pdfjs_dir="$project_dir/node_modules/pdfjs-dist"
 
 if [[ ! -f "$pdfjs_dir/legacy/build/pdf.min.mjs" ]]; then

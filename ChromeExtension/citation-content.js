@@ -20,7 +20,7 @@
   const pageMetadata = {
     ...metadata,
     pageURL: location.href,
-    doi: metadata.doi || globalThis.CiteNameCitation.doiFromURL(location.href),
+    doi: metadata.doi || globalThis.NameThePaperCitation.doiFromURL(location.href),
     savedAt: Date.now(),
   };
 
@@ -38,16 +38,16 @@
 
       const searchResult = downloadPoint.closest(".searchResultGroup");
       const metadataAtDownload = searchResult
-        ? globalThis.CiteNameCitation.metadataFromAiritiSearchResult(searchResult)
+        ? globalThis.NameThePaperCitation.metadataFromAiritiSearchResult(searchResult)
         : (isAiritiArticlePage()
-          ? globalThis.CiteNameCitation.metadataFromDocument(document)
+          ? globalThis.NameThePaperCitation.metadataFromDocument(document)
           : null);
       if (!metadataAtDownload) return;
 
       const downloadMetadata = {
         ...metadataAtDownload,
         pageURL: location.href,
-        doi: metadataAtDownload?.doi || globalThis.CiteNameCitation.doiFromURL(location.href),
+        doi: metadataAtDownload?.doi || globalThis.NameThePaperCitation.doiFromURL(location.href),
         savedAt: Date.now(),
       };
       publishAiritiSearchResults();
@@ -75,7 +75,7 @@
 
   function publishAiritiSearchResults() {
     const results = Array.from(document.querySelectorAll?.(".searchResultGroup") || [])
-      .map((result) => globalThis.CiteNameCitation.metadataFromAiritiSearchResult(result))
+      .map((result) => globalThis.NameThePaperCitation.metadataFromAiritiSearchResult(result))
       .filter(Boolean);
     if (results.length === 0) return;
     const signature = JSON.stringify(results.map(({ title, author, year }) => [title, author, year]));
@@ -115,18 +115,46 @@
   }
 
   async function metadataForCurrentPage() {
-    const itemURL = globalThis.CiteNameCitation.dspaceItemURL(location.href);
+    const itemURL = globalThis.NameThePaperCitation.dspaceItemURL(location.href);
     if (itemURL) {
       try {
         const response = await fetch(itemURL, { headers: { Accept: "application/json" } });
         if (response.ok) {
-          const metadata = globalThis.CiteNameCitation.metadataFromDSpaceItem(await response.json());
+          const metadata = globalThis.NameThePaperCitation.metadataFromDSpaceItem(await response.json());
           if (metadata) return metadata;
         }
       } catch {
         // Continue with standard citation metadata when the repository API is unavailable.
       }
     }
-    return globalThis.CiteNameCitation.metadataFromDocument(document);
+    const ubcItemURL = globalThis.NameThePaperCitation.ubcItemAPIURL(location.href);
+    if (ubcItemURL) {
+      try {
+        const response = await fetch(ubcItemURL, { headers: { Accept: "application/json" } });
+        if (response.ok) {
+          const metadata = globalThis.NameThePaperCitation.metadataFromUBCItem(await response.json());
+          if (metadata) return metadata;
+        }
+      } catch {
+        // Continue with standard citation metadata when the UBC API is unavailable.
+      }
+    }
+    const eScholarshipQuery = globalThis.NameThePaperCitation.eScholarshipGraphQLQuery(location.href);
+    if (eScholarshipQuery) {
+      try {
+        const response = await fetch("https://escholarship.org/graphql", {
+          method: "POST",
+          headers: { Accept: "application/json", "Content-Type": "application/json" },
+          body: JSON.stringify({ query: eScholarshipQuery }),
+        });
+        if (response.ok) {
+          const metadata = globalThis.NameThePaperCitation.metadataFromEScholarshipItem(await response.json());
+          if (metadata) return metadata;
+        }
+      } catch {
+        // Continue with standard citation metadata when the eScholarship API is unavailable.
+      }
+    }
+    return globalThis.NameThePaperCitation.metadataFromDocument(document);
   }
 })();

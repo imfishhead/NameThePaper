@@ -1,6 +1,8 @@
-# CiteName
+# NameThePaper
 
-CiteName 是 Chrome／Arc 擴充功能，會在學術檔案開始下載時，依作者、出版年份與標題自動整理檔名。
+<img src="Assets/namethepaper-icon-1024.png" alt="NameThePaper Icon" width="96">
+
+NameThePaper 是 Chrome／Arc 擴充功能，會在學術檔案開始下載時，依作者、出版年份與標題自動整理檔名。
 
 ```text
 main.pdf
@@ -8,9 +10,9 @@ main.pdf
 Lorraine Mazerolle et al. (2013) - Shaping Citizen Perceptions of Police Legitimacy- A Randomized Field Trial of Procedural Justice.pdf
 ```
 
-目前版本：**2.0.34**
+目前版本：**2.0.37**
 
-CiteName 不需要桌面 App、Native Host 或常駐背景程式。PDF 由擴充功能在瀏覽器內分析，不會上傳到 CiteName 的伺服器。
+NameThePaper 不需要桌面 App、Native Host 或常駐背景程式。PDF 由擴充功能在瀏覽器內分析，不會上傳到 NameThePaper 的伺服器。
 
 ## 支援的網站
 
@@ -30,12 +32,14 @@ CiteName 不需要桌面 App、Native Host 或常駐背景程式。PDF 由擴充
 | Karger | `karger.com` | PDF | 下載網址中的文章編號與 Crossref 書目資料 |
 | ResearchGate | `researchgate.net/publication/<ID>` | 公開全文 PDF | 文章頁 metadata；缺少分頁資料時由 PDF 網址還原標題並查詢 Crossref |
 | Nature Portfolio | `nature.com/articles/<ID>` | 文章 PDF | 從 Nature 文章編號還原 DOI，再查詢 Crossref |
+| UBC Open Collections | `open.library.ubc.ca/.../items/<ID>` | 學位論文 PDF | UBC Open Collections 公開 API |
+| eScholarship（University of California） | `escholarship.org/uc/item/<ID>` 與 `escholarship.org/content/<ID>/<ID>.pdf` | 文章與會議論文 PDF | eScholarship 公開 GraphQL API |
 
-華藝搜尋結果換頁後，CiteName 會重新保存當頁各筆資料，再以原始 PDF 標題配對正確的作者與年份，避免整頁下載套用同一個檔名。
+華藝搜尋結果換頁後，NameThePaper 會重新保存當頁各筆資料，再以原始 PDF 標題配對正確的作者與年份，避免整頁下載套用同一個檔名。
 
 ### 通用相容流程
 
-CiteName 也能處理未列在上表的學術網站：
+NameThePaper 也能處理未列在上表的學術網站：
 
 - 下載網址、文章網址或 PDF 內含 DOI 時，向 Crossref 查詢正式書目資料。
 - 文章頁含 `citation_title`、`citation_author`、`citation_publication_date`、`citation_pdf_url` 等 metadata 時，直接使用頁面資料。
@@ -43,7 +47,7 @@ CiteName 也能處理未列在上表的學術網站：
 - 英文學位論文 PDF 可由首頁的 `dissertation`、`thesis` 等標記辨識，並擷取 `By 作者` 與年份。
 - Open Journal Systems、DSpace 與 DOI 採用通用網址規則，因此可支援多個不同機構或出版社的站台。
 
-通用流程不代表所有學術網站都保證成功。網站若使用登入限制、防爬機制、特殊下載流程或無法讀取的 Blob，CiteName 可能只能保留原檔名。
+通用流程不代表所有學術網站都保證成功。網站若使用登入限制、防爬機制、特殊下載流程或無法讀取的 Blob，NameThePaper 可能只能保留原檔名。
 
 ## 檔名格式
 
@@ -56,23 +60,23 @@ CiteName 也能處理未列在上表的學術網站：
 | （年份）－標題 | `(2024) - Analytical Engines.pdf` |
 | 只用標題 | `Analytical Engines.pdf` |
 
-若作者或年份缺漏，CiteName 會使用現有資料組合檔名；只有標題可信時，就只保留標題。三位以上作者會顯示第一位作者加上 `et al.`。Chrome 不允許 `?`、`:`、`/` 等字元出現在檔名中，CiteName 會自動換成 `-`。同名檔案由瀏覽器加上流水號，既有檔案不會被覆蓋。
+若作者或年份缺漏，NameThePaper 會使用現有資料組合檔名；只有標題可信時，就只保留標題。三位以上作者會顯示第一位作者加上 `et al.`。Chrome 不允許 `?`、`:`、`/` 等字元出現在檔名中，NameThePaper 會自動換成 `-`。同名檔案由瀏覽器加上流水號，既有檔案不會被覆蓋。
 
 ## 書目資料的選用順序
 
-CiteName 依下列順序尋找資料，找到完整且可信的來源後就停止：
+NameThePaper 依下列順序尋找資料，找到完整且可信的來源後就停止：
 
 1. 臺灣博碩士論文網或國圖期刊文獻網的詳目資料。
 2. Open Journal Systems 文章頁。
 3. 下載網址或來源頁中的 DOI，並以 Crossref 補齊資料。
 4. ScienceDirect 的 PII。
 5. 華藝文章頁或搜尋結果項目。
-6. DSpace REST API。
+6. UBC Open Collections、eScholarship 或 DSpace 的公開 API。
 7. Europe PMC 或 PubMed Central 文章頁。
 8. 一般文章頁的 `citation_*` metadata。
 9. PDF metadata、首頁文字與 PDF 內的 DOI。
 
-資料不足、辨識結果不可信或網站拒絕讀取時，CiteName 會保留網站提供的原檔名。
+資料不足、辨識結果不可信或網站拒絕讀取時，NameThePaper 會保留網站提供的原檔名。
 
 ## 安裝
 
@@ -89,24 +93,24 @@ npm run build:extension
 
 1. 開啟「開發人員模式」。
 2. 按「載入未封裝項目」。
-3. 選擇 `dist/CiteName Chrome/Extension`。
+3. 選擇 `dist/NameThePaper Chrome/Extension`。
 
-重新建置後，回到擴充功能頁面按 CiteName 的「重新載入」。已經開啟的文章頁也要重新整理，讓新版內容程式進入頁面。
+重新建置後，回到擴充功能頁面按 NameThePaper 的「重新載入」。已經開啟的文章頁也要重新整理，讓新版內容程式進入頁面。
 
 ### Chrome Web Store 上架包
 
 建置完成後，從擴充功能根目錄建立 ZIP。壓縮檔的根目錄必須直接包含 `manifest.json`。
 
 ```sh
-cd "dist/CiteName Chrome/Extension"
-zip -r -q "../../CiteName-2.0.34-chrome-web-store.zip" . \
+cd "dist/NameThePaper Chrome/Extension"
+zip -r -q "../../NameThePaper-2.0.37-chrome-web-store.zip" . \
   -x '*.DS_Store' '__MACOSX/*'
 ```
 
 目前已建置的上架檔位於：
 
 ```text
-dist/CiteName-2.0.34-chrome-web-store.zip
+dist/NameThePaper-2.0.37-chrome-web-store.zip
 ```
 
 ## 瀏覽器與權限
@@ -127,7 +131,7 @@ dist/CiteName-2.0.34-chrome-web-store.zip
 
 ## 隱私權
 
-CiteName 不設帳號，不含分析或追蹤工具，也不蒐集、出售或分享個人資料、瀏覽紀錄與 PDF 內容。
+NameThePaper 不設帳號，不含分析或追蹤工具，也不蒐集、出售或分享個人資料、瀏覽紀錄與 PDF 內容。
 
 需要補足書目資料時，擴充功能可能向 Crossref、Europe PMC、原文章網站或公開學術儲存庫查詢 DOI、PMC 編號或公開書目。這些請求只用來產生檔名。完整說明請見 [PRIVACY.md](PRIVACY.md)。
 
@@ -181,4 +185,4 @@ dist/                      本機建置產物
 
 ## 授權
 
-本專案採 [CiteName Proprietary License](LICENSE)。原始碼、圖片與文件保留所有權利。未經書面同意，不得複製、修改、重新發布或轉售。官方版本可透過 Chrome Web Store 安裝，供個人或組織內部使用。
+本專案採 [NameThePaper Proprietary License](LICENSE)。原始碼、圖片與文件保留所有權利。未經書面同意，不得複製、修改、重新發布或轉售。官方版本可透過 Chrome Web Store 安裝，供個人或組織內部使用。

@@ -14,15 +14,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 async function analyzeDownload(message) {
-  const pmcArticleURL = globalThis.CiteNameCitation.articleURLForPMC(message.url);
+  const pmcArticleURL = globalThis.NameThePaperCitation.articleURLForPMC(message.url);
   if (pmcArticleURL) {
     const document = await fetchHTMLDocument(pmcArticleURL);
-    const metadata = globalThis.CiteNameCitation.metadataFromDocument(document);
+    const metadata = globalThis.NameThePaperCitation.metadataFromDocument(document);
     if (metadata) return metadata;
   }
 
   const data = await fetchPDF(message.url);
-  return globalThis.CiteNamePDF.analyzeData(pdfjsLib, data, {
+  return globalThis.NameThePaperPDF.analyzeData(pdfjsLib, data, {
     sourceFilename: message.sourceFilename,
     cMapUrl: chrome.runtime.getURL("vendor/cmaps/"),
     standardFontDataUrl: chrome.runtime.getURL("vendor/standard_fonts/"),
