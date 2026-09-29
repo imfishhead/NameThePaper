@@ -20,6 +20,7 @@ app_dir="$project_dir/dist/NameThePaper 0.3.app"
 mkdir -p "$app_dir/Contents/MacOS" "$app_dir/Contents/Resources"
 cp -X "$binary_dir/namethepaper" "$app_dir/Contents/MacOS/namethepaper"
 cp -X "$project_dir/Supporting/Info.plist" "$app_dir/Contents/Info.plist"
+cp -X "$project_dir/Assets/namethepaper-icon-1024.png" "$app_dir/Contents/Resources/namethepaper-icon-1024.png"
 xattr -cr "$app_dir"
 codesign --force --deep --sign - "$app_dir"
 

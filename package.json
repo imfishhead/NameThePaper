@@ -1,6 +1,7 @@
 {
   "name": "namethepaper-extension",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "test": "node Tests/ChromeExtensionTests/ndltd.test.js && node Tests/ChromeExtensionTests/tpl.test.js && node --test Tests/ChromeExtensionTests/e2e.test.js Tests/ChromeExtensionTests/pdf-analyzer.test.js",
     "build:extension": "zsh Scripts/build_chrome_extension.sh"

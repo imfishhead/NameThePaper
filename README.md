@@ -185,4 +185,4 @@ dist/                      本機建置產物
 
 ## 授權
 
-本專案採 [NameThePaper Proprietary License](LICENSE)。原始碼、圖片與文件保留所有權利。未經書面同意，不得複製、修改、重新發布或轉售。官方版本可透過 Chrome Web Store 安裝，供個人或組織內部使用。
+本專案採 [MIT License](LICENSE)。你可以使用、修改、散布及商用，但須保留原始著作權與授權聲明。
